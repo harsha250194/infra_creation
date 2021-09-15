@@ -37,6 +37,25 @@ resource "aws_security_group" "ec2_sg" {
   }, module.naming.tags)
 }
 
+resource "aws_security_group_rule" "ec2_ingress_allow" {
+  cidr_blocks       = [var.gitlab_runners_cidr]
+  description       = "Allow Gitlab to communicate with the cluster API server"
+  from_port         = 443
+  protocol          = "tcp"
+  to_port           = 443
+  security_group_id = aws_security_group.ec2_sg.id
+  type              = "ingress"
+}
+
+resource "aws_security_group_rule" "ec2_ssh_allow" {
+  cidr_blocks       = [var.gitlab_runners_cidr]
+  description       = "Allow Gitlab to communicate with the cluster API server"
+  from_port         = 22
+  protocol          = "tcp"
+  to_port           = 22
+  security_group_id = aws_security_group.ec2_sg.id
+  type              = "ingress"
+}
 
 // Configure the EC2 instance in a public subnet
 resource "aws_instance" "ec2_public" {
