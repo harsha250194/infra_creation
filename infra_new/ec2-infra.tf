@@ -1,3 +1,12 @@
+data "aws_subnet_ids" "public" {
+  vpc_id = var.vpc_id == "new" ? aws_vpc.one_kube_new_vpc[0].id : var.vpc_id
+  tags = {
+    "tmna:subnet:type" = "public"
+  }
+  depends_on = [aws_vpc.one_kube_new_vpc, aws_subnet.eks_one_kube_new_public_subnets]
+}
+
+
 // Create aws_ami filter to pick up the ami available in your region
 data "aws_ami" "amazon-linux-2" {
   most_recent = true
@@ -31,15 +40,14 @@ resource "aws_security_group" "ec2_sg" {
 
 // Configure the EC2 instance in a public subnet
 resource "aws_instance" "ec2_public" {
+  for_each      = data.aws_subnet_ids.public.ids
   ami                         = data.aws_ami.amazon-linux-2.id
   associate_public_ip_address = true
   instance_type               = "t2.micro"
   key_name                    = var.key_name
-  subnet_id                   = "${aws_subnet.eks_one_kube_new_public_subnets[0].id}"                #var.vpc.public_subnets[0]
+  subnet_id                   = each.value       #"${aws_subnet.eks_one_kube_new_public_subnets[0].id}"                #var.vpc.public_subnets[0]
   vpc_security_group_ids      = flatten(["${aws_security_group.ec2_sg.id}"])
-  depends_on = [
-    aws_subnet.eks_one_kube_new_public_subnets,
-  ]
+  
   tags = merge(
   {
     Name = module.naming.ec2_name,
