@@ -1,0 +1,139 @@
+service: ctp-21mm-syntheticmonitoring
+frameworkVersion: '2'
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: __STAGE__
+  region: us-east-1
+  # stage: devd
+  # region: us-east-1
+  environment:
+    GLOBALHEALTH_TABLE: __DYNAMODBTABLE__ #results to ctp-21mm-globalhealth-devd
+    # GLOBALHEALTH_TABLE: ctp-21mm-ghcmdcenter-devd
+    ROLE: __ROLE__
+    POLICY: ${self:provider.environment.GLOBALHEALTH_TABLE}-policy
+    INSTANCEPROFILE: ${self:provider.environment.GLOBALHEALTH_TABLE}-InstanceProfile
+plugins:
+  - serverless-parameters
+
+custom:
+  parameters:
+    awsRolesParameter:
+      Type: CommaDelimitedList
+      Description: Name of existing Roles you want to add to the newly created Managed Policy
+      Default: "__NODEROLE__"
+
+
+resources: # CloudFormation template syntax from here on.
+  Resources:
+    dynamoDBTable:
+      Type: AWS::DynamoDB::GlobalTable
+      Properties:
+        TableName: ${self:provider.environment.GLOBALHEALTH_TABLE}
+        AttributeDefinitions:
+          - AttributeName: servicesuite
+            AttributeType: S
+          - AttributeName: timestampms
+            AttributeType: N
+        KeySchema:
+          - AttributeName: servicesuite
+            KeyType: HASH
+          - AttributeName: timestampms
+            KeyType: RANGE
+        BillingMode: PROVISIONED
+        WriteProvisionedThroughputSettings:
+          WriteCapacityAutoScalingSettings:
+            MaxCapacity: 20
+            MinCapacity: 5
+            TargetTrackingScalingPolicyConfiguration:
+              TargetValue: 70.0
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
+        Replicas:
+          - Region: us-east-1
+            PointInTimeRecoverySpecification:
+              PointInTimeRecoveryEnabled: true
+            ReadProvisionedThroughputSettings:
+              ReadCapacityAutoScalingSettings:
+              #Provisioned Read Capacity with Auto Scaling Request Interval 30 / 15(fixed by AWS) =2sec/call so in 2 sec--> 14ghqcenter calls, 2600 read capacity units
+                MaxCapacity: 20
+                MinCapacity: 5
+                TargetTrackingScalingPolicyConfiguration:
+                  TargetValue: 70.0
+          - Region: us-west-2
+            PointInTimeRecoverySpecification:
+              PointInTimeRecoveryEnabled: true
+            ReadProvisionedThroughputSettings:
+              ReadCapacityAutoScalingSettings:
+                MaxCapacity: 5
+                MinCapacity: 5
+                TargetTrackingScalingPolicyConfiguration:
+                  TargetValue: 70.0
+                  
+    dynamodbaccessrole: 
+      Type: "AWS::IAM::Role"
+      Properties:
+        RoleName: ${self:provider.environment.ROLE}
+        AssumeRolePolicyDocument: !Sub
+              - |
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                      {
+                          "Sid": "",
+                          "Effect": "Allow",
+                          "Principal": {
+                              "Federated": "${IamOidcProviderArn}"
+                          },
+                          "Action": "sts:AssumeRoleWithWebIdentity",
+                          "Condition": {
+                              "StringEquals": {
+                                  "${OidcProviderEndpoint}:sub": "system:serviceaccount:__NAMESPACE__:ghcmdcenter"
+                              }
+                          }
+                      }
+                  ]
+                }
+              - {
+                  "IamOidcProviderArn": "arn:aws:iam::__ACCOUNT__:oidc-provider/oidc.eks.__REGION__.amazonaws.com/id/__OIDC__",
+                  "OidcProviderEndpoint": "oidc.eks.__REGION__.amazonaws.com/id/__OIDC__"
+                }
+        Path: "/"
+    dynamodbaccesspolicy:
+      Type: AWS::IAM::ManagedPolicy
+      Properties:
+        ManagedPolicyName: ${self:provider.environment.POLICY}
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Sid: "DynamoDBTableAccess"
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:GetItem
+                - dynamodb:Scan
+                - dynamodb:Query
+              Resource:
+                Fn::GetAtt:
+                  - dynamoDBTable
+                  - Arn
+            - Effect: Allow
+              Sid: "DynamoDBDescribeLimitsAccess"
+              Action:
+                - dynamodb:DescribeLimits
+              Resource:
+                Fn::GetAtt:
+                  - dynamoDBTable
+                  - Arn
+        Roles: !Ref awsRolesParameter
+          # - Ref: "dynamodbaccessrole"
+    dynamodbaccessprofile: 
+      Type: "AWS::IAM::InstanceProfile"
+      Properties: 
+        InstanceProfileName: ${self:provider.environment.INSTANCEPROFILE}
+        Path: "/"
+        Roles: 
+          - Ref: "dynamodbaccessrole"

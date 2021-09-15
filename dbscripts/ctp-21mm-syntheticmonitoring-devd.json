@@ -1,0 +1,34 @@
+{
+  "keys": {
+    "Partition-Key": "servicesuite(String)",
+    "SortKey": "timestampms(Number)",
+    "ttl": "ttl"
+  },
+  "servicesuite": {
+    "S": "ca-dev-token"
+  },
+  "timestampms": {
+    "N": "1631545496688"
+  },
+  "servicesuitecluster": {
+    "S": "onekube-qa-usw2-ecs"
+  },
+  "responsetext": {
+    "S": "servicesuitehealthy"
+  },
+  "ttl": {
+    "N": "1631545496"
+  },
+  "healthid": {
+    "S": "28d0226c-0cfb-43d6-9a4d-f8102d0aefab"
+  },
+  "region": {
+    "S": "us-east-1"
+  },
+  "responsecode": {
+    "S": "200"
+  },
+  "env": {
+    "S": "dev"
+  }
+}
