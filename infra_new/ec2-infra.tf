@@ -87,7 +87,37 @@ resource "aws_instance" "ec2_public" {
   
   //chmod key 400 on EC2 instance
   provisioner "remote-exec" {
-    inline = ["chmod 400 ~/${var.key_name}.pem"]
+    inline = [
+      "chmod 400 ~/${var.key_name}.pem",
+      "DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=<DD-API-KEY> DD_SITE="datadoghq.com" bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)"",
+      ]
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("${var.key_name}.pem")
+      host        = self.public_ip
+    }
+
+  }
+
+  provisioner "file" {
+    source      = "../http_check/conf.yaml"
+    destination = "/root/etc/datadog-agent/conf.d/http_check.d/."
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("${var.key_name}.pem")
+      host        = self.public_ip
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo systemctl restart datadog-agent",
+      "sudo datadog-agent status"
+      ]
 
     connection {
       type        = "ssh"
