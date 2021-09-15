@@ -1,10 +1,10 @@
 terraform {
   backend "remote" {
     hostname = "app.terraform.io"
-    organization = "connected-technologies"
+    organization = "harsha_personal"
 
     workspaces {
-      prefix = "kubernetes-platform-"
+      prefix = "infra_creation"
     }
   }
 }
