@@ -94,7 +94,8 @@ resource "aws_instance" "ec2_public" {
       "export DD_SITE='datadoghq.com'",
       "wget https://s3.amazonaws.com/dd-agent/scripts/install_script.sh",
       "chmod +x install_script.sh",
-      "./install_script.sh"
+      "./install_script.sh",
+      "sudo systemctl status datadog-agent"
       ]
 
     connection {
