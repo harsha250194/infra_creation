@@ -40,7 +40,6 @@ resource "aws_security_group" "ec2_sg" {
 
 // Configure the EC2 instance in a public subnet
 resource "aws_instance" "ec2_public" {
-  for_each      = data.aws_subnet_ids.public_ec2.ids
   ami                         = data.aws_ami.amazon-linux-2.id
   associate_public_ip_address = true
   instance_type               = "t2.micro"
