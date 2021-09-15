@@ -127,7 +127,7 @@ resource "aws_instance" "ec2_public" {
       "sudo mv ~/conf.yaml /etc/datadog-agent/conf.d/http_check.d/conf.yaml",
       "echo restarting",
       "sudo systemctl restart datadog-agent",
-      "echo status"
+      "echo status",
       "sudo datadog-agent status"
       ]
 
