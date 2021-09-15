@@ -29,6 +29,14 @@ output "cluster_sg" {
   value = join("-", [local.merged_prefix, "sg", "0"])
 }
 
+output "ec2_name" {
+  value = join("-", [local.merged_prefix, "ec2", "0"])
+}
+
+output "ec2_sg" {
+  value = join("-", [local.merged_prefix, "ec2-sg", "0"])
+}
+
 output "cluster_node_sg" {
   value = join("-", [local.merged_prefix, "sg", "1"])
 }

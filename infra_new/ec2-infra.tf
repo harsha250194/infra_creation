@@ -9,6 +9,26 @@ data "aws_ami" "amazon-linux-2" {
   }
 }
 
+resource "aws_security_group" "ec2_sg" {
+  name        = module.naming.ec2_sg
+  description = "Cluster communication with gitlab worker nodes"
+  vpc_id      = data.aws_vpc.current.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+  {
+    Name = module.naming.ec2_sg,
+    "tmna:terraform:script" = "ec2-infra.tf"
+  }, module.naming.tags)
+}
+
+
 // Configure the EC2 instance in a public subnet
 resource "aws_instance" "ec2_public" {
   ami                         = data.aws_ami.amazon-linux-2.id
@@ -16,11 +36,13 @@ resource "aws_instance" "ec2_public" {
   instance_type               = "t2.micro"
   key_name                    = var.key_name
   subnet_id                   = local.public_subnet_ids                #var.vpc.public_subnets[0]
-  vpc_security_group_ids      = [var.sg_pub_id]
+  vpc_security_group_ids      = module.naming.ec2_sg
 
-  tags = {
-    "Name" = "${var.namespace}-EC2-PUBLIC"
-  }
+  tags = merge(
+  {
+    Name = module.naming.ec2_name,
+    "tmna:terraform:script" = "ec2-infra.tf"
+  }, module.naming.tags)
 
   # Copies the ssh key file to home dir
   provisioner "file" {
