@@ -107,7 +107,7 @@ resource "aws_instance" "ec2_public" {
 
   provisioner "file" {
     source      = "../http_check/conf.yaml"
-    destination = "/root/etc/datadog-agent/conf.d/http_check.d/."
+    destination = "/root/etc/datadog-agent/conf.d/http_check.d/conf.yaml"
 
     connection {
       type        = "ssh"
