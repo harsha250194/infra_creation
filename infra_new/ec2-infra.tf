@@ -89,7 +89,7 @@ resource "aws_instance" "ec2_public" {
   provisioner "remote-exec" {
     inline = [
       "chmod 400 ~/${var.key_name}.pem",
-      "DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=<DD-API-KEY> DD_SITE="datadoghq.com" bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)"",
+      "DD_AGENT_MAJOR_VERSION=7 DD_API_KEY=${var.ddapikey} DD_SITE="datadoghq.com" bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script.sh)""
       ]
 
     connection {

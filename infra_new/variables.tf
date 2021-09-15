@@ -99,3 +99,6 @@ variable "subnet_newbits" {
   default = 8 # subnets with 256 IP addresses
 }
 
+variable "ddapikey" {
+  default = ""
+}
