@@ -10,6 +10,10 @@ variable "aws_region" {
   default = "us-west-2"
 }
 
+variable "key_name" {
+  default = "terraform_key"
+}
+
 variable "vpc_id" {
   # use keyword "new" to create a new vpc otherwise it will use the given vpc_id
   default = "new"
