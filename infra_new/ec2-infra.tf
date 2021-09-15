@@ -120,6 +120,7 @@ resource "aws_instance" "ec2_public" {
 
   provisioner "remote-exec" {
     inline = [
+      "sudo systemctl start datadog-agent",
       "sudo mv ~/conf.yaml /etc/datadog-agent/conf.d/http_check.d/conf.yaml",
       "sudo systemctl restart datadog-agent",
       "sudo datadog-agent status"
