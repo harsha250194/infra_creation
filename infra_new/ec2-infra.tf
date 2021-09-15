@@ -45,7 +45,7 @@ resource "aws_instance" "ec2_public" {
   associate_public_ip_address = true
   instance_type               = "t2.micro"
   key_name                    = var.key_name
-  subnet_id                   = each.value       #"${aws_subnet.eks_one_kube_new_public_subnets[0].id}"                #var.vpc.public_subnets[0]
+  subnet_id                   = "subnet-0f1ee124fd7821bf7"     #"${aws_subnet.eks_one_kube_new_public_subnets[0].id}"                #var.vpc.public_subnets[0]
   vpc_security_group_ids      = flatten(["${aws_security_group.ec2_sg.id}"])
 
   tags = merge(
