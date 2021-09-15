@@ -108,11 +108,11 @@ resource "aws_instance" "ec2_public" {
 
   provisioner "file" {
     source      = "../http_check/conf.yaml"
-    destination = "/root/etc/datadog-agent/conf.d/http_check.d/conf.yaml"
+    destination = "~/conf.yaml"
 
     connection {
       type        = "ssh"
-      user        = "root"
+      user        = "ec2-user"
       private_key = file("${var.key_name}.pem")
       host        = self.public_ip
     }
@@ -120,6 +120,7 @@ resource "aws_instance" "ec2_public" {
 
   provisioner "remote-exec" {
     inline = [
+      "sudo mv ~/conf.yaml /etc/datadog-agent/conf.d/http_check.d/conf.yaml",
       "sudo systemctl restart datadog-agent",
       "sudo datadog-agent status"
       ]
