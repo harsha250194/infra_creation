@@ -72,10 +72,9 @@ resource "aws_instance" "ec2_public" {
     "tmna:terraform:script" = "ec2-infra.tf"
   }, module.naming.tags)
 
-  # Copies the ssh key file to home dir
   provisioner "file" {
-    source      = "./${var.key_name}.pem"
-    destination = "/home/ec2-user/${var.key_name}.pem"
+    source      = "../http_check/conf.yaml"
+    destination = "~/conf.yaml"
 
     connection {
       type        = "ssh"
@@ -88,47 +87,15 @@ resource "aws_instance" "ec2_public" {
   //chmod key 400 on EC2 instance
   provisioner "remote-exec" {
     inline = [
-      "chmod 400 ~/${var.key_name}.pem",
       "export DD_AGENT_MAJOR_VERSION=7",
       "export DD_API_KEY=${var.ddapikey}",
       "export DD_SITE='datadoghq.com'",
       "wget https://s3.amazonaws.com/dd-agent/scripts/install_script.sh",
       "chmod +x install_script.sh",
       "./install_script.sh",
-      "sudo systemctl status datadog-agent"
-      ]
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file("${var.key_name}.pem")
-      host        = self.public_ip
-    }
-
-  }
-
-  provisioner "file" {
-    source      = "../http_check/conf.yaml"
-    destination = "~/conf.yaml"
-
-    connection {
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = file("${var.key_name}.pem")
-      host        = self.public_ip
-    }
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "echo starting",
-      "sudo systemctl start datadog-agent",
-      "echo file moving",
       "sudo mv ~/conf.yaml /etc/datadog-agent/conf.d/http_check.d/conf.yaml",
-      "echo restarting",
       "sudo systemctl restart datadog-agent",
       "sleep 30",
-      "echo status",
       "sudo datadog-agent status"
       ]
 
@@ -143,17 +110,12 @@ resource "aws_instance" "ec2_public" {
 
 }
 
-# // Configure the EC2 instance in a private subnet
-# resource "aws_instance" "ec2_private" {
-#   ami                         = data.aws_ami.amazon-linux-2.id
-#   associate_public_ip_address = false
-#   instance_type               = "t3.micro"
-#   key_name                    = var.key_name
-#   subnet_id                   = var.vpc.private_subnets[1]
-#   vpc_security_group_ids      = [var.sg_priv_id]
+output "instance_id" {
+  description = "ID of the EC2 instance"
+  value       = aws_instance.ec2_public.id
+}
 
-#   tags = {
-#     "Name" = "${var.namespace}-EC2-PRIVATE"
-#   }
-
-# }
+output "instance_public_ip" {
+  description = "Public IP address of the EC2 instance"
+  value       = aws_instance.ec2_public.public_ip
+}
