@@ -182,7 +182,7 @@ resource "aws_route_table_association" "eks_one_kube_priv" {
   count = var.subnet_count
 
   subnet_id      = local.private_subnet_ids[count.index]
-  route_table_id = aws_route_table.eks_one_kube_priv[count.index].id
+  route_table_id = aws_route_table.eks_one_kube_priv[0].id
 
   lifecycle {
     ignore_changes = [subnet_id]
