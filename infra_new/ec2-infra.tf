@@ -36,7 +36,7 @@ resource "aws_instance" "ec2_public" {
   instance_type               = "t2.micro"
   key_name                    = var.key_name
   subnet_id                   = "${aws_subnet.eks_one_kube_new_public_subnets[0].id}"                #var.vpc.public_subnets[0]
-  vpc_security_group_ids      = module.naming.ec2_sg
+  vpc_security_group_ids      = "${module.naming.ec2_sg}"
   depends_on = [
     aws_subnet.eks_one_kube_new_public_subnets,
   ]
